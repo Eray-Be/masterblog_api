@@ -6,14 +6,35 @@ CORS(app)
 
 POSTS = [
     {"id": 1, "title": "First post", "content": "This is the first post."},
-    {"id": 2, "title": "Second post", "content": "This is the second post."}
+    {"id": 2, "title": "Second post", "content": "This is the second post."},
+    {"id": 3, "title": "Flask API", "content": "Learning how to build APIs with Flask."}
 ]
 
 
 @app.route('/api/posts', methods=['GET', 'POST'])
 def posts():
     if request.method == 'GET':
-        return jsonify(POSTS)
+        sort_field = request.args.get('sort')
+        direction = request.args.get('direction', 'asc')
+
+        if sort_field is None:
+            return jsonify(POSTS), 200
+
+        if sort_field not in ['title', 'content']:
+            return jsonify({"error": "Invalid sort field"}), 400
+
+        if direction not in ['asc', 'desc']:
+            return jsonify({"error": "Invalid sort direction"}), 400
+
+        reverse_sort = True if direction == 'desc' else False
+
+        sorted_posts = sorted(
+            POSTS,
+            key=lambda post: post[sort_field].lower(),
+            reverse=reverse_sort
+        )
+
+        return jsonify(sorted_posts), 200
 
     elif request.method == 'POST':
         data = request.get_json()
@@ -92,6 +113,7 @@ def search_posts():
             results.append(post)
 
     return jsonify(results), 200
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5002, debug=True)
